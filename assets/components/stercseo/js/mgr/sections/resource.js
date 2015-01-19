@@ -11,6 +11,11 @@ Ext.onReady(function() {
     //     console.log(record);
     // });
 
+    // console.info('rec', StercSEO.record);
+    // var xxx=(typeof StercSEO.record.sitemap !== 'undefined' && StercSEO.record.sitemap) ? StercSEO.record.sitemap : MODx.config['stercseo.sitemap'];
+    // console.info (xxx);
+
+
     //Add new tab
     MODx.addTab("modx-resource-tabs",{
         title:"SEO"
@@ -48,7 +53,7 @@ Ext.onReady(function() {
                         ,valueField: "value"
                         ,displayField: "text"
                         ,mode: "local"
-                        ,value: StercSEO.record.index
+                        ,value: typeof StercSEO.record.index !== 'undefined' && StercSEO.record.index ? StercSEO.record.index : MODx.config['stercseo.index']
                         ,listeners: {change: function(){MODx.fireResourceFormChange();}}
                         ,width: 400
                     },{
@@ -71,7 +76,7 @@ Ext.onReady(function() {
                         ,valueField: "value"
                         ,displayField: "text"
                         ,mode: "local"
-                        ,value: StercSEO.record.follow
+                        ,value: typeof StercSEO.record.follow !== 'undefined' && StercSEO.record.follow ? StercSEO.record.follow : MODx.config['stercseo.follow']
                         ,listeners: {change: function(){MODx.fireResourceFormChange();}}
                         ,width: 400
                     },{
@@ -127,7 +132,8 @@ Ext.onReady(function() {
                         ,valueField: "value"
                         ,displayField: "text"
                         ,mode: "local"
-                        ,value: StercSEO.record.sitemap ? StercSEO.record.sitemap : 0
+                        ,value: (typeof StercSEO.record.sitemap !== 'undefined' && StercSEO.record.sitemap) ? StercSEO.record.sitemap : MODx.config['stercseo.sitemap']
+                        // ,value: "0"
                         ,listeners: {change: function(){MODx.fireResourceFormChange();}}
                         ,width: 400
                     },{
@@ -151,7 +157,7 @@ Ext.onReady(function() {
                         ,valueField: "value"
                         ,displayField: "text"
                         ,mode: "local"
-                        ,value: StercSEO.record.priority ? StercSEO.record.priority : 0.5
+                        ,value: typeof StercSEO.record.priority !== 'undefined' && StercSEO.record.priority ? StercSEO.record.priority : MODx.config['stercseo.priority']
                         ,listeners: {change: function(){MODx.fireResourceFormChange();}}
                         ,width: 400
                     },{
@@ -175,7 +181,7 @@ Ext.onReady(function() {
                         ,valueField: "value"
                         ,displayField: "text"
                         ,mode: "local"
-                        ,value: StercSEO.record.changefreq
+                        ,value: typeof StercSEO.record.changefreq !== 'undefined' && StercSEO.record.changefreq ? StercSEO.record.changefreq : MODx.config['stercseo.changefreq']
                         ,listeners: {change: function(){MODx.fireResourceFormChange();}}
                         ,width: 400
                     },{

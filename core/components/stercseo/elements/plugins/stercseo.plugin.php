@@ -37,22 +37,32 @@ $stercseo = $modx->getService('stercseo','StercSEO',$modx->getOption('stercseo.c
 
 if (!($stercseo instanceof StercSEO)) return;
 
+$def_prop = array(
+	'index' => $modx->getOption('stercseo.index', null, '1'),
+	'follow' => $modx->getOption('stercseo.follow', null, '1'),
+	'sitemap' => $modx->getOption('stercseo.sitemap', null, '1'),
+	'priority' => $modx->getOption('stercseo.priority', null, '0.5'),
+	'changefreq' => $modx->getOption('stercseo.changefreq', null, 'weekly'),
+	//'urls' => $modx->fromJSON($_POST['urls'])
+);
+
+if (!function_exists('is_not_null')){
+	function is_not_null($val){
+	    return !is_null($val);
+	}
+}
+
 switch ($modx->event->name) {
 	case 'OnDocFormPrerender':
 		$resource =& $modx->event->params['resource'];
 		if($resource){
 			$properties = $resource->getProperties('stercseo');
 		}
-		if(empty($properties)){
-			$properties = array(
-				'index' => $modx->getOption('stercseo.index', null, '1'),
-				'follow' => $modx->getOption('stercseo.follow', null, '1'),
-				'sitemap' => $modx->getOption('stercseo.sitemap', null, '1'),
-				'priority' => $modx->getOption('stercseo.priority', null, '0.5'),
-				'changefreq' => $modx->getOption('stercseo.changefreq', null, 'weekly'),
-				//'urls' => $modx->fromJSON($_POST['urls'])
-			);
-		}
+
+		$properties = array_filter($properties, 'is_not_null');	// оставляем все кроме значений с NULL
+
+		$properties = (empty($properties)) ? $def_prop : array_merge($def_prop,$properties);
+
 		//$output .= '<div id="stercseo-box">'.$errorMessage.$outputLanguageItems.'</div>';
 		//$modx->event->output($output);
 		$modx->regClientStartupHTMLBlock('<script type="text/javascript">
@@ -81,55 +91,50 @@ switch ($modx->event->name) {
 		break;
 
 	case 'OnBeforeDocFormSave':
-	        $oldResource = ($mode == 'upd') ? $modx->getObject('modResource',$resource->get('id')) : $resource;
+	    $oldResource = ($mode == 'upd') ? $modx->getObject('modResource',$resource->get('id')) : $resource;
 			$properties = $oldResource->getProperties('stercseo');
-			if($_POST['urls'] != 'false' && isset($_POST['urls'])){
-				if($mode == 'upd'){
-					$newProperties = array(
-						'index' => (isset($_POST['index']) ? $_POST['index'] : $properties['index']),
-						'follow' => (isset($_POST['follow']) ? $_POST['follow'] : $properties['follow']),
-						'sitemap' => (isset($_POST['sitemap']) ? $_POST['sitemap'] : $properties['sitemap']),
-						'priority' => (isset($_POST['priority']) ? $_POST['priority'] : $properties['priority']),
-						'changefreq' => (isset($_POST['changefreq']) ? $_POST['changefreq'] : $properties['changefreq']),
-						'urls' => $modx->fromJSON($_POST['urls'])
-					);
-				}else{
-					$newProperties = array(
-						'index' => (isset($_POST['index']) ? $_POST['index'] : $modx->getOption('stercseo.index', null, '1')),
-						'follow' => (isset($_POST['follow']) ? $_POST['follow'] : $modx->getOption('stercseo.follow', null, '1')),
-						'sitemap' => (isset($_POST['sitemap']) ? $_POST['sitemap'] : $modx->getOption('stercseo.sitemap', null, '1')),
-						'priority' => (isset($_POST['priority']) ? $_POST['priority'] : $modx->getOption('stercseo.priority', null, '0.5')),
-						'changefreq' => (isset($_POST['changefreq']) ? $_POST['changefreq'] : $modx->getOption('stercseo.changefreq', null, 'weekly')),
-						'urls' => $modx->fromJSON($_POST['urls'])
-					);
-				}
+
+			$properties = array_filter($properties, 'is_not_null');	// оставляем все кроме значений с NULL
+			$properties = (empty($properties)) ? $def_prop : array_merge($def_prop,$properties);
+
+			if($mode == 'upd'){
+				$newProperties = array(
+					'index' => (isset($_POST['index']) ? $_POST['index'] : $properties['index']),
+					'follow' => (isset($_POST['follow']) ? $_POST['follow'] : $properties['follow']),
+					'sitemap' => (isset($_POST['sitemap']) ? $_POST['sitemap'] : $properties['sitemap']),
+					'priority' => (isset($_POST['priority']) ? $_POST['priority'] : $properties['priority']),
+					'changefreq' => (isset($_POST['changefreq']) ? $_POST['changefreq'] : $properties['changefreq']),
+				);
 			}else{
-			   	if($mode == 'upd'){
-					$newProperties = array(
-						'index' => (isset($_POST['index']) ? $_POST['index'] : $properties['index']),
-						'follow' => (isset($_POST['follow']) ? $_POST['follow'] : $properties['follow']),
-						'sitemap' => (isset($_POST['sitemap']) ? $_POST['sitemap'] : $properties['sitemap']),
-						'priority' => (isset($_POST['priority']) ? $_POST['priority'] : $properties['priority']),
-						'changefreq' => (isset($_POST['changefreq']) ? $_POST['changefreq'] : $properties['changefreq']),
-						'urls' => $modx->fromJSON($_POST['urls'])
-					);
-				}else{
-					$newProperties = array(
-						'index' => (isset($_POST['index']) ? $_POST['index'] : $modx->getOption('stercseo.index', null, '1')),
-						'follow' => (isset($_POST['follow']) ? $_POST['follow'] : $modx->getOption('stercseo.follow', null, '1')),
-						'sitemap' => (isset($_POST['sitemap']) ? $_POST['sitemap'] : $modx->getOption('stercseo.sitemap', null, '1')),
-						'priority' => (isset($_POST['priority']) ? $_POST['priority'] : $modx->getOption('stercseo.priority', null, '0.5')),
-						'changefreq' => (isset($_POST['changefreq']) ? $_POST['changefreq'] : $modx->getOption('stercseo.changefreq', null, 'weekly')),
-						'urls' => $modx->fromJSON($_POST['urls'])
-					);
-				}
-			}
-			if($oldResource->get('uri') != $resource->get('uri') && $oldResource->get('uri') != ''){
-//$modx->log(modX::LOG_LEVEL_ERROR, 'OLD: '.$oldResource->get('uri').' - NEW: '. $resource->get('uri'));
-				$newProperties['urls'][] = array('url' => $oldResource->get('uri'));
+				$newProperties = array(
+					'index' => (isset($_POST['index']) ? $_POST['index'] : $modx->getOption('stercseo.index', null, '1')),
+					'follow' => (isset($_POST['follow']) ? $_POST['follow'] : $modx->getOption('stercseo.follow', null, '1')),
+					'sitemap' => (isset($_POST['sitemap']) ? $_POST['sitemap'] : $modx->getOption('stercseo.sitemap', null, '1')),
+					'priority' => (isset($_POST['priority']) ? $_POST['priority'] : $modx->getOption('stercseo.priority', null, '0.5')),
+					'changefreq' => (isset($_POST['changefreq']) ? $_POST['changefreq'] : $modx->getOption('stercseo.changefreq', null, 'weekly')),
+				);
 			}
 
-        	$resource->setProperties($newProperties,'stercseo');
+			$newProperties['urls'] = ($_POST['urls'] != 'false' && isset($_POST['urls'])) ? $modx->fromJSON($_POST['urls']) : $properties['urls'];
+
+			if($oldResource->get('uri') != $resource->get('uri') && $oldResource->get('uri') != ''){
+				// $modx->log(modX::LOG_LEVEL_ERROR, 'OLD: '.$oldResource->get('uri').' - NEW: '. $resource->get('uri'));
+				$newProperties['urls'][] = array('url' => $oldResource->get('uri'));
+			}
+			$newProperties['urls'] = array_unique($newProperties['urls']);
+
+			/*ob_start();
+			var_dump($_POST);
+			$post=ob_get_contents();
+			ob_end_clean();
+			*/
+			// $modx->log(modX::LOG_LEVEL_ERROR, 'MODE: :'.$mode);
+			// $modx->log(modX::LOG_LEVEL_ERROR, '</br>test: :'.$modx->getOption('stercseo.sitemap', null, '1'));
+			// $modx->log(modX::LOG_LEVEL_ERROR, 'POST:'.$post);
+			// $modx->log(modX::LOG_LEVEL_ERROR, 'Old prop:'.$properties_dump);
+			// $modx->log(modX::LOG_LEVEL_ERROR, 'Old prop:'.print_r($properties,true));
+			// $modx->log(modX::LOG_LEVEL_ERROR, 'Prop:'.print_r($newProperties,true));
+    	$resource->setProperties($newProperties,'stercseo');
 		break;
 	case 'OnLoadWebDocument':
 		if($modx->resource){
@@ -165,17 +170,19 @@ switch ($modx->event->name) {
 			if($oldResource->get('uri') != $resource->getAliasPath($resource->get('alias')) && $oldResource->get('uri') != ''){
 				$newProperties = $oldResource->getProperties('stercseo');
 				$newProperties['urls'][] = array('url' => $oldResource->get('uri'));
+				$newProperties['urls'] = array_unique($newProperties['urls']);
 				$oldResource->setProperties($newProperties,'stercseo');
 				$oldResource->save();
 			}
 		}
 		break;
+		return true;
 	case 'OnResourceDuplicate':
 		$props = $newResource->getProperties('stercseo');
 		$props['urls'] = array();
+		$props['urls'] = array_unique($props['urls']);
 		$newResource->setProperties($props,'stercseo');
 		$newResource->save();
-		break;
-
+	break;
 }
 return;
